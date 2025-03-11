@@ -1,8 +1,6 @@
 from logging.config import fileConfig
-
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
 from alembic import context
 
 # this is the Alembic Config object, which provides
@@ -14,10 +12,8 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
+# Import your model's Base and set target_metadata for 'autogenerate' support
+# Assuming the 'Base' class is in 'models.py'
 from models import Base
 target_metadata = Base.metadata
 
@@ -25,7 +21,6 @@ target_metadata = Base.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -39,7 +34,10 @@ def run_migrations_offline() -> None:
     script output.
 
     """
+    # Get the database URL from the config file
     url = config.get_main_option("sqlalchemy.url")
+    
+    # Configure the context with the URL and target_metadata
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -47,9 +45,9 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
     )
 
+    # Start the migration process in offline mode
     with context.begin_transaction():
         context.run_migrations()
-
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
@@ -58,21 +56,25 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    # Set up an engine using the configuration settings
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
+        config.get_section(config.config_ini_section),  # Get settings from the alembic.ini file
+        prefix="sqlalchemy.",  # Prefix for the SQLAlchemy settings in alembic.ini
+        poolclass=pool.NullPool,  # Set the pool class for database connections
     )
 
+    # Connect to the database and configure the context
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata  # Pass the metadata for autogenerate support
         )
 
+        # Run the migrations within a transaction
         with context.begin_transaction():
             context.run_migrations()
 
-
+# Check if we're in offline or online mode and run the appropriate migration function
 if context.is_offline_mode():
     run_migrations_offline()
 else:
